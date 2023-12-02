@@ -1,0 +1,63 @@
+from flask import Flask, render_template,request,url_for,jsonify,redirect
+from pymongo import MongoClient
+app=Flask(__name__)
+
+mongo_string='mongodb://diskarmn:Diska123@ac-sjiapka-shard-00-00.3lnlkgx.mongodb.net:27017,ac-sjiapka-shard-00-01.3lnlkgx.mongodb.net:27017,ac-sjiapka-shard-00-02.3lnlkgx.mongodb.net:27017/?ssl=true&replicaSet=atlas-vnije0-shard-0&authSource=admin&retryWrites=true&w=majority'
+client=MongoClient(mongo_string)
+db=client.tehdiska
+
+@app.route('/',methods=['GET'])
+def home():
+    return render_template('index.html')
+
+@app.route('/pemberitahuan',methods=['GET'])
+def pemberitahuan():
+    return render_template('pemberitahuan.html')
+
+@app.route("/tampil",methods=['GET'])
+def tampil():
+    semua=list(db.pelanggan.find({},{'_id': False}))
+    return jsonify({'semua':semua})
+
+@app.route("/tampilp",methods=['GET'])
+def tampilp():
+    semuap=list(db.status.find({},{'_id': False}))
+    return jsonify({'semuap':semuap})
+
+@app.route('/selesai',methods=['POST'])
+def selesai():
+    selesai=request.form['nomor']
+    db.pelanggan.update_one(
+        {'num':int(selesai)},
+        {'$set':{'status':'selesai'}}
+    )    
+    return jsonify({'pesan':'berhasil mengubah info pesanan'})
+
+@app.route('/hapus',methods=['POST'])
+def hapus():
+    hapus=request.form['hapus']
+    db.pelanggan.delete_one(
+        {'num':int(hapus)})    
+    return jsonify({'pesan':'berhasil menghapus pesanan'})
+
+@app.route('/pemberitahuan',methods=['GET'])
+def pemberitahuan():
+    return render_template('pemberitahuan.html')
+@app.route('/ubah',methods=['POST'])
+def ubah():
+    nomor=request.form['knomor']
+    pesan=request.form['kpesan']
+    original=request.form['koriginal']
+    strawberry=request.form['kstrawberry']
+    db.status.update_one(
+        {'nomor':int(nomor)},
+        {'$set':{'pesan': pesan,
+        'original': original,
+        'strawberry': strawberry}}
+    )    
+    return jsonify({'pesan':'berhasil mengubah info pesanan'})
+
+
+
+if __name__=='__main__':
+    app.run('0.0.0.0',port=5001,debug=True)
